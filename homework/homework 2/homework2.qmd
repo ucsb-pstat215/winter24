@@ -1,0 +1,35 @@
+---
+title: "Homework 2"
+author: "(Your name here)"
+format: pdf
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Due Sunday 2/4 at Midnight
+
+## Theory problem:
+
+Suppose $y\mid \lambda ∼ Poisson(\lambda)$. Find Jeffreys’ prior density for $\lambda$, and then find values of $\alpha$ and $\beta$ for which a proper Gamma($\alpha, \beta$) prior density is a reasonably close match to Jeffreys' prior.  Note: there are no strictly "right" answers to this question-- you should state what how you decided to define "reasonably close".
+
+### Computing problem:
+
+In the bioassay example of of BDA Section 3.7, replace the uniform prior density by a joint normal prior distribution on $(\alpha,\beta)$, with $\alpha\sim \text{Normal}(0,2^2)$, $\beta\sim\text{Normal}(10,10^2)$, and corr$(\alpha,\beta)$=0.5.
+
+a) Repeat all the computations and plots of Section 3.7 with this new prior distribution.
+a) Check that your contour plot and scatterplot look like a compromise between the prior distribution and the likelihood (as displayed in Figure 3.3).  Include a colored point for the MLE and a separate colored point at the prior mean.
+a) Discuss (in a brief sentence) the effect of this hypothetical prior information on the conclusions in the applied context.
+
+### Applied problems:
+
+**Chicken Brains**
+
+An experiment was performed on the effects of magnetic fields on the flow of calcium out of chicken brains. Two groups of chickens were involved: a control group of 32 chickens and an exposed group of 36 chickens. The chickens were killed, their brains removed, and a measurement was taken on each chicken brain.  The purpose of the experiment was to measure the average flow $\mu_c$ in untreated (control) chickens and the average flow $\mu_t$ in treated chickens. The 32 measurements on the control group had a sample mean of 1.013 and a sample standard deviation of 0.24. The 36 measurements on the treatment group had a sample mean of 1.173 and a sample standard deviation of 0.20.
+
+a) Assuming the control measurements were taken at random from a normal distribution with mean $\mu_c$ and variance $\sigma_c^2$, what is the marginal posterior distribution of $\mu_c$, $p(\mu_c | y_c)$? Similarly, use the treatment group measurements to determine the marginal posterior distribution of $\mu_t$, $p(\mu_t | y_t). Assume a uniform prior distribution on ($\mu_c$, $\mu_t$, $log \sigma_c$, $log \sigma_t$). You don't need to derive the entire result yourself, you can use results derived in BDA Section 3.3, but you should clearly state what the parameters of the resulting posteriors are.
+
+a) Generate samples to approximate the posterior distribution of $\mu_t - \mu_c$^[the problem of estimating two normal means with unknown variances is a classic problem in statistics called the [Behrens–Fisher problem](https://en.wikipedia.org/wiki/Behrens%E2%80%93Fisher_problem).]. To get this, you should sample from the independent posterior distributions you obtained in part (a) above. Plot a histogram of your samples and give an approximate 95% posterior interval for $\mu_t - \mu_c$. Does it appear as if there is an effect of magnetic fields on the flow of calcium in chicken brains?
+
+a) In a follow up experiment, each chicken brain was split into two.  For each chicken, one of the brain halves was assigned to the magnetic treatment and the other half to the control. There were 32 chickens in the experiment and the sample mean in the control group was 0.987 and in the treatment group was 1.168.  The sample standard deviation of the control group was 0.21 and in the treated group was 0.23.  The sample correlation between the observations was 0.44.  Use the conjugate inverse-Wishart family of prior distributions for the multivariate normal introduced in Section 3.6.  As noted, the marginal posterior distribution of $\mu$ is a multivariate t distribution (See BDA Appendix A for how to sample from this distribution).  Sample from the marginal posterior distribution of $(\mu_c, \mu_t)$ and plot the joint density using an appropriate function from the [ggdensity](https://github.com/jamesotto852/ggdensity) package.
