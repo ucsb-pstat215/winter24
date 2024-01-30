@@ -12,7 +12,7 @@ Due Sunday 2/4 at Midnight
 
 ## Theory problem:
 
-Suppose $y\mid \lambda ∼ Poisson(\lambda)$. Find Jeffreys’ prior density for $\lambda$, and then find values of $\alpha$ and $\beta$ for which a proper Gamma($\alpha, \beta$) prior density is a reasonably close match to Jeffreys' prior.  Note: there are no strictly "right" answers to this question-- you should state what how you decided to define "reasonably close".
+Suppose $y\mid \lambda ∼ Poisson(\lambda)$. Find Jeffreys’ prior density for $\lambda$, and then find values of $\alpha$ and $\beta$ for which a proper Gamma($\alpha, \beta$) prior density is a reasonably close match to Jeffreys' prior.  Note: there are no strictly "right" answers to this question-- you should state how you decided to define "reasonably close".
 
 ### Computing problem:
 
@@ -28,7 +28,7 @@ a) Discuss (in a brief sentence) the effect of this hypothetical prior informati
 
 An experiment was performed on the effects of magnetic fields on the flow of calcium out of chicken brains. Two groups of chickens were involved: a control group of 32 chickens and an exposed group of 36 chickens. The chickens were killed, their brains removed, and a measurement was taken on each chicken brain.  The purpose of the experiment was to measure the average flow $\mu_c$ in untreated (control) chickens and the average flow $\mu_t$ in treated chickens. The 32 measurements on the control group had a sample mean of 1.013 and a sample standard deviation of 0.24. The 36 measurements on the treatment group had a sample mean of 1.173 and a sample standard deviation of 0.20.
 
-a) Assuming the control measurements were taken at random from a normal distribution with mean $\mu_c$ and variance $\sigma_c^2$, what is the marginal posterior distribution of $\mu_c$, $p(\mu_c | y_c)$? Similarly, use the treatment group measurements to determine the marginal posterior distribution of $\mu_t$, $p(\mu_t | y_t). Assume a uniform prior distribution on ($\mu_c$, $\mu_t$, $log \sigma_c$, $log \sigma_t$). You don't need to derive the entire result yourself, you can use results derived in BDA Section 3.3, but you should clearly state what the parameters of the resulting posteriors are.
+a) Assuming the control measurements were taken at random from a normal distribution with mean $\mu_c$ and variance $\sigma_c^2$, what is the marginal posterior distribution of $\mu_c$, $p(\mu_c | y_c)$? Similarly, use the treatment group measurements to determine the marginal posterior distribution of $\mu_t$, $p(\mu_t | y_t)$. Assume a uniform prior distribution on ($\mu_c$, $\mu_t$, $log \sigma_c$, $log \sigma_t$). You don't need to derive the entire result yourself, you can use results derived in BDA Section 3.3, but you should clearly state what the parameters of the resulting posteriors are.
 
 a) Generate samples to approximate the posterior distribution of $\mu_t - \mu_c$^[the problem of estimating two normal means with unknown variances is a classic problem in statistics called the [Behrens–Fisher problem](https://en.wikipedia.org/wiki/Behrens%E2%80%93Fisher_problem).]. To get this, you should sample from the independent posterior distributions you obtained in part (a) above. Plot a histogram of your samples and give an approximate 95% posterior interval for $\mu_t - \mu_c$. Does it appear as if there is an effect of magnetic fields on the flow of calcium in chicken brains?
 
