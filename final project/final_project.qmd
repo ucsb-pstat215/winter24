@@ -1,0 +1,111 @@
+---
+title: "Final Project"
+format: html
+editor: visual
+---
+
+In lieu of a final exam, you are required to complete a final project report. The report will be submitted to Canvas by the final exam day, March 18th.
+
+Report requirements
+
+-   Your report must be at least 10 pages and no more than 20 pages (excluding any appendices).
+
+-   No more than 2 of your total pages can consist of figures (i.e. you are allowed roughly 4 half-page figures). You can include appendices for as many extra figures tables that you woudl like if needed (no length limit). Your report must include *at least* one figure.
+
+-   Your report must include a "References section" with *at leat* 3 non-textbook references.
+
+-   Choose a dataset of interest which can be related to your field of study, personal interest, or an open dataset available online. If you are trying a new method, it is a good idea to consider the analysis of both real and simulated data.
+
+-   All projects must be completed independently unless you have a strong reason to work together with a partner (instructor approval required).
+
+## Report structure
+
+Here are some sections you *can* and maybe should include in your paper, but you are not strictly required to follow this format.
+
+-   Abstract (approximately 1/2 page).
+
+-   Introduction (1-3 pages). Describe relevant background for the project, cite existing work, and clearly state the goals of your project.
+
+    -   Conduct a literature review on Bayesian statistical methods relevant to your chosen dataset. Include key concepts, models, and techniques covered in the course.
+
+    -   Discuss any recent advancements or innovative Bayesian approaches not covered in class.
+
+    -   Problem Statement. End the introduction with a clear discussion of your contribution in this paper. Clearly define the research question or problem you aim to address and discuss why Bayesian methods might be suitable for addressing this problem.
+
+-   Data (1-2 pages).
+
+    -    Clearly describe the dataset, including its link to the source, variables, and any relevant background information.
+
+    -   Are there missing values? What considerations are important when proposing a sampling model?
+
+    -   If relevant, describe the steps taken to clean and preprocess the data.
+
+-   Methods (2-4 pages). Describe the Bayesian model and/or inferential methods that you'll be using in your project.
+
+    -   Provide a detailed explanation of the chosen model, including prior specifications and any assumptions made.
+
+    -   Describe the inferential methods you are using (MCMC, optimization, approximate methods, etc).
+
+    -   If using off-the-shelf tools / packages, clearly describe the key arguments and tuning parameters to these functions. If using default function arguments, describe why they are appropriate for yoru analysis.
+
+-   Results (2-3 pages). Include figure(s) clearly demonstrating the results of your data analysis. If appropriate you should include posterior summaries for relevant model quantities, diagostics indicating model fit, and summaries about the Monte Carlo inference. Such diagnostics can be discussed at high level in the main paper, but diagnostics like traceplots should go in an Appendix.
+
+    -   If applicable, compare different Bayesian models for your dataset. Use posterior predictive checks or other model comparison techniques to assess model fit and performance.
+
+    -   If appropriate, you can compare your results to those from a non-Bayesian analysis
+
+-   Conclusion (1 page)
+
+    -   Discuss the implications of your findings and how they contribute to the existing knowledge in the field. What did you learn? What worked and what didn't? What possible follow up analyses are warranted?
+
+    -   Discuss the limitations of your analysis and any future extensions.
+
+## Project ideas 
+
+Broadly speaking, there are two paths you can take:
+
+-   Focus your paper on an in depth analysis of a dataset of interest
+
+-   Or: write an in depth report on a  Bayesian topic that was not covered (or covered only superficially) in class. Demonstrate the method(s) in a short case study of a dataset. Some possibilities:
+
+    -   Non-parametric Bayes (e.g. The Dirichlet Process or Indian Buffet Process priors)
+
+    -   Bayesian Variable Selection
+
+    -   Alternative inferential techniques
+
+        -   Iterative Nested Laplace Approximation (INLA)
+        -   Sequential Monte Carlo (SMC)
+        -   Riemmanian Manifold HMC
+        -   Variational Bayes methods
+
+    -   Methods for missing data or causal inference
+
+Some additional project topics / ideas: 
+
+-   Survival Analysis:
+
+    -   Apply Bayesian survival analysis to understand the time until an event of interest occurs. This could be applied to medical data, customer churn, or other time-to-event scenarios.
+
+-   Methods for A/B Testing:
+
+    -   Explore Bayesian approaches for A/B testing in marketing or product development. Compare traditional frequentist methods with Bayesian alternatives.
+
+-   Causal Inference:
+
+    -    Explore Bayesian causal inference methods, especially in observational studies where randomization is not possible. Consider applications in health, education, or social sciences.
+
+-   Bayesian Methods in Sports Analytics:
+
+    -   Use Bayesian techniques to analyze sports data, such as player performance, team dynamics, or game outcome predictions. Explore the impact of incorporating prior knowledge about player abilities.
+
+-   Bayesian Approaches to Time Series Forecasting:
+
+    -   Investigate Bayesian time series models for forecasting, considering applications in finance, economics, or other relevant fields.
+
+-   Nonparametric regression: Bayesian Additive Regression Trees (BART) or Gaussian Processes
+
+-   Bayesian Inference for Network Analysis:
+
+    -   Apply Bayesian methods to analyze network data, such as social networks or biological networks. Explore the use of Bayesian models for community detection or link prediction.
+
