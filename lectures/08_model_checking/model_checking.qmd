@@ -1,0 +1,576 @@
+---
+title: "Model Checking"
+format: 
+  revealjs:
+    theme: default
+    chalkboard: true
+    slide-number: true
+---
+
+```{r, echo=FALSE, warning=FALSE}
+library(knitr)
+library(ggplot2)
+library(kableExtra)
+library(patchwork)
+library(tidybayes)
+library(cmdstanr)
+check_cmdstan_toolchain(fix = TRUE, quiet = TRUE)
+register_knitr_engine(override = FALSE)
+options(mc.cores=4)
+suppressPackageStartupMessages(library(tidyverse))
+opts_chunk$set(echo=FALSE, fig.align='center', out.width="60%") 
+knitr::opts_chunk$set(dpi=300, fig.width=7)
+options("kableExtra.html.bsTable" = T)
+ig <- function(file) {knitr::include_graphics(file)}
+source("../scripts/make_figs.R")
+source("../scripts/color_defs.R")
+```
+
+### Announcements
+
+- Chapter 6 and 7 today
+
+---
+
+### All models are wrong
+
+<br>
+
+```{r, out.width="70%"}
+ig("images/all-models-wrong.jpg")
+```
+
+<center>If the model is "wrong", how can we improve it?<center>
+
+---
+
+### Box's Loop
+
+```{r}
+ig("../images/boxloop.jpeg")
+```
+
+---
+
+
+
+### Posterior predictive model checking
+
+- Let $y_{\text{obs}}$ represent the observe data $y_1, ... y_n$
+
+- Let $\tilde y$ represent $n$ replicated (e.g fake) observations generated from the model 
+
+- $p(\tilde y  \mid y_{\text{obs}}) = \int p(\tilde y \mid \theta)p(\theta \mid y_{\text{obs}}) d\theta$
+
+- Generate test quantity from $t(\tilde y)$
+
+- Check if the simulated test quantities are similar to the observed test quantity, $t(y_{\rm obs})$
+
+---
+
+### Posterior predictive model checking
+
+- If the model fits the data, then fake data generated under the model should look similar to the observed data
+
+- Discrepancies can be due to model misfit or chance (or both!)
+
+- Monte Carlo approach:
+
+  1. $\text{sample } \theta^{ ( s ) } \sim p(\theta | \boldsymbol{ Y } = \boldsymbol{ y }_{\mathrm{ obs }})$
+  
+  2. $\text{sample } \tilde{ \boldsymbol{ y } }^{ ( s ) } = \left(  {\tilde y }_{ 1 }^{ ( s ) }, \ldots ,  {\tilde y}_{ n }^{ ( s ) } \right) \sim \text{i.i.d. } p( y | \theta^{ ( s ) })$
+      + $\tilde y$ has same number of observations as $y_{obs}$
+      
+  3. $\text{compute } t^{ ( s ) } = t \left( \tilde { \boldsymbol { y } } ^ { ( s ) }\right)$
+
+---
+
+### A Bayesian Modeling Process (overview)
+
+1. Propose a sampling model and prior distributions
+
+1. Compute the posterior distribution, here $p(\theta \mid Y=y) \sim \text{Gamma}(a + y, \beta + \nu)$
+
+1. Simulate test statistics, $T(\tilde y)^{(s)}$ from the posterior predictive distribution
+
+  + for s in 1:num_fake_data
+    + Sample $\theta^{(s)} \sim Gamma(a + y, b + \nu)$
+    + Sample ${\tilde y}^{(s)} \sim \text{i.i.d Pois}(\theta^{(s)})$ (same sample size as $y_{obs}$)
+    + Compute $T({\tilde y}^{(s)})$
+
+4. Compare the samples $T( {\tilde y}^{(s)})$ to $T(y_{\rm obs})$
+
+5. Identify any model misfit, go back to step 1 and repeat.
+
+## Choosing Test Statistics
+
+- Test quantity, or discrepancy measure, $T(y, \theta)$ can also be a function of parameters
+
+- A model can be inadequate for some purposes but adequate for others
+
+- Avoid choosing sufficient statistics
+
+- Statistics should be relevant to the scientific purpose
+
+- Often measures a feature of the data not directly addressed by the probability model
+    + e.g. Ranks of the sample or correlation of residuals
+
+## Speed of Light Example
+
+- Newcomb measured the amount of time required for light to travel a distance of 7442 meters. 
+- 66 measurements were collected
+
+```{r}
+ig("images/speed_of_light_orig.png")
+```
+
+## Speed of Light (T = min)
+
+```{r, fig.width=4}
+#| fig-width: 4
+ig("images/speed_of_light_min.png")
+```
+
+ 
+## Speed of Light Example
+
+<br>
+<br>
+
+```{r}
+ig("images/speed_of_light.png")
+```
+
+## Predictive Checks: an example    
+
+- In the 1990's there was a survey of 155 women, at least 40 years of age
+
+- Recorded number of children and educational attainment 
+
+    + Bachelor's degree or higher $(n_1 = 111)$
+    + Less than bachelor's degree $(n_2 = 44)$
+    
+$$\left. \begin{array} { l } { Y _ { 1,1 } \ldots , Y _ { n _ { 1 } , 1 } | \theta _ { 1 } \sim \text { i.i.d. } \text { Poisson } \left( \theta _ { 1 } \right) } \\ { Y _ { 1,2 } \ldots , Y _ { n _ { 2 } , 2 } | \theta _ { 2 } \sim \text { i.i.d. } \operatorname { Poisson } \left( \theta _ { 2 } \right) } \end{array} \right.$$
+
+---
+
+### PPCs example
+
+<br>
+
+```{r, fig.width=6, fig.height=3, out.width="80%"}
+fig_3_9(cols2)
+```
+
+
+## PPCs example    
+
+<br>
+
+```{r, fig.width=6, fig.height=3, out.width="80%"}
+fig_3_10(cols2)
+```
+
+---
+
+### PPCs example    
+
+- Let's check the model fit for the "without Bachelor's" group first
+
+- Do $S$ times: 
+  + sample $n_2 = 44$ observations $\tilde y$ from the posterior predictive distribution
+
+- Let $T(\tilde y)$ be the fraction of women with no children
+
+```{r, eval=FALSE, echo=TRUE}
+S <- 1000
+t_s <- numeric(S)
+for(s in 1:S){ 
+  theta_s <- rgamma(1, a, b) # whatever a and b are for my posterior
+  ytilde_s <- rpois(n=44, theta = theta_s) 
+  t_s[s] <- mean(ytilde_s == 0) # compute test stat
+}  
+
+## then visualize histogram of t_s
+
+```
+
+---
+
+### PPCs example
+```{r predictive_samples, cache=TRUE, warning=FALSE, message=FALSE}
+bachelors_data <- scan("../data/menchild30bach.dat")
+no_bachelors_data <- scan("../data/menchild30nobach.dat")
+
+### prior parameters
+a <- 2
+b <- 1
+
+### bachelors data
+num_bachelors <- length(bachelors_data)
+y_bachelors <- sum(bachelors_data)
+
+### data in group B
+num_no_bachelors <- length(no_bachelors_data)
+y_no_bachelors <- sum(no_bachelors_data)
+
+### samples of theta
+num_samples <- 500
+theta_bachelors_mc <- rgamma(num_samples, a + y_bachelors, b + num_bachelors)
+theta_no_bachelors_mc <- rgamma(num_samples, a + y_no_bachelors, b + num_no_bachelors)
+
+
+### predictive distribution model checking
+
+### simulating from the predictive distribution of the ratio
+### of the number of men with two children to one in the bachelors group
+
+### samples from predictives
+y_bachelors_mc <- rpois(num_samples, theta_bachelors_mc) # one Poisson sample per posterior theta draw
+y_no_bachelrs_mc <- rpois(num_samples, theta_no_bachelors_mc)
+
+frac_zero_bachelors_mc <- frac_zero_no_bachelors_mc <- frac_one_bachelors_mc <- frac_one_no_bachelors_mc <- rep(NA, num_samples)
+for(t in 1:num_samples) {
+  y_bachelors_mc <- rpois(num_bachelors, theta_bachelors_mc[t])
+  y_no_bachelors_mc <- rpois(num_no_bachelors, theta_no_bachelors_mc[t])
+
+  frac_zero_bachelors_mc[t] <- mean(y_bachelors_mc==0)
+  frac_zero_no_bachelors_mc[t] <- mean(y_no_bachelors_mc==0)
+  
+  frac_one_bachelors_mc[t] <- mean(y_bachelors_mc==1)
+  frac_one_no_bachelors_mc[t] <- mean(y_no_bachelors_mc==1)
+
+}
+
+ggplot(tibble(no_child=jitter(frac_zero_no_bachelors_mc))) + geom_histogram(aes(x=no_child)) + geom_vline(xintercept = mean(no_bachelors_data==0), col="red", size=2) + xlab("Fraction with no children")  + ylab("Count") + theme_bw(base_size=24) + ggtitle("Women without Bachelors degrees")
+
+
+
+```
+
+<center>$Pr((T^{rep} > T^{obs} \mid y_{obs}) =$ `r mean(frac_zero_no_bachelors_mc > mean(no_bachelors_data==0))`<center>
+
+---
+
+### PPCs example
+
+<br>
+
+```{r, fig.width=6, fig.height=3, out.width="80%"}
+fig_3_9(cols2)
+```
+
+---
+
+### PPCs example    
+
+- Model checking both groups
+
+- Look at fit for two different test statistics:
+
+  + Fraction with no children
+
+  + Fraction with one child
+
+---
+
+### Poisson example
+
+<br>
+<br>
+
+```{r, dependson="predictive_samples", out.width="80%", fig.width=14}
+
+bachelors_plot <- ggplot(tibble(zero_children=jitter(frac_zero_bachelors_mc), one_child=jitter(frac_one_bachelors_mc))) + 
+  geom_point(aes(x=zero_children, y=one_child)) + theme_bw(base_size=24) + 
+  geom_hline(aes(yintercept=mean(bachelors_data==1)), col="red", linetype="dashed") +
+  geom_vline(aes(xintercept=mean(bachelors_data==0)), col="red", linetype="dashed") +
+  geom_point(aes(x=mean(bachelors_data==0), y=mean(bachelors_data==1)), col="red", size=2) +
+  xlab("Frac. of reps with no children") + ylab("Frac. of reps with one child") +
+  ggtitle("With Bachelors")
+
+no_bachelors_plot <- ggplot(tibble(zero_children=jitter(frac_zero_no_bachelors_mc), one_child=jitter(frac_one_no_bachelors_mc))) + 
+  geom_point(aes(x=zero_children, y=one_child)) + theme_bw(base_size=24) + 
+  geom_hline(aes(yintercept=mean(no_bachelors_data==1)), col="red", linetype="dashed") +
+  geom_vline(aes(xintercept=mean(no_bachelors_data==0)), col="red", linetype="dashed") +
+  geom_point(aes(x=mean(no_bachelors_data==0), y=mean(no_bachelors_data==1)), col="red", size=2) +
+  xlab("Frac. of reps with no children") + ylab("Frac of reps with one child") +
+  ggtitle("Without Bachelors")
+
+
+
+bachelors_plot + no_bachelors_plot
+
+```
+
+---
+
+### Predictive Distributions in Stan
+
+```{stan "ppc_pois", eval=FALSE, echo=TRUE, output.var="tmp"}
+...
+} model {
+  y1 ~ poisson(lambda1);
+  y2 ~ poisson(lambda2);
+} generated quantities{
+
+  int y1rep[n1];
+  int y2rep[n2];
+  real log_lik[n1+n2];
+  for(i in 1:n1){
+    y1rep[i] = poisson_rng(lambda1);
+    log_lik[i] = poisson_lpmf(y1[i] | lambda1);
+  }
+  for(i in 1:n2){
+    y2rep[i] = poisson_rng(lambda2);
+    log_lik[n1+i] = poisson_lpmf(y2[i] | lambda2);
+  }
+}
+
+```
+
+## Predictive Checks in Stan
+
+```{r, dependson="predictive_samples"}
+stan_pois <- cmdstan_model("pois_model.stan")
+data_list=list(n1=num_bachelors, n2=num_no_bachelors,
+               y1=bachelors_data, y2=no_bachelors_data)
+pois_fit <- stan_pois$sample(data=data_list, iter_warmup=10000, iter_sampling=20000, refresh=0, chains=4)
+              
+print(pois_fit)
+```
+
+## Predictive Checks (Pois. Model)
+
+```{r}
+y1_rep <- pois_fit %>% spread_draws(y1rep[N1])
+y2_rep <- pois_fit %>% spread_draws(y2rep[N2])
+
+y1_rep %>% group_by(.draw) %>% 
+  summarize(mv=mean(y1rep)/var(y1rep), zeros=mean(y1rep==0)) ->
+  y1_T
+y2_rep %>% group_by(.draw) %>% 
+  summarize(mv=mean(y2rep)/var(y2rep), zeros=mean(y2rep==0)) ->
+  y2_T
+
+y1_T %>% ggplot() + geom_histogram(aes(x=zeros)) + 
+  geom_vline(xintercept = mean(bachelors_data == 0), col="red") + 
+  ggtitle("Bachelors, Frac Zero") -> y1_frac_zero
+
+y1_T %>% ggplot() + geom_histogram(aes(x=mv)) + 
+  geom_vline(xintercept = mean(bachelors_data)/var(bachelors_data), col="red") +
+  ggtitle("Bachelors, Mean/Var") -> y1_g3
+
+y2_T %>% ggplot() + geom_histogram(aes(x=zeros)) + 
+  geom_vline(xintercept = mean(no_bachelors_data == 0), col="red") +
+  ggtitle("No Bachelors, Frac Zero") -> y2_frac_zero
+
+y2_T %>% ggplot() + geom_histogram(aes(x=mv)) + 
+  geom_vline(xintercept = mean(no_bachelors_data)/var(no_bachelors_data), col="red") +
+  ggtitle("No Bachelors, Mean/Var")-> y2_g3
+
+
+(y1_frac_zero + y2_frac_zero) / (y1_g3 + y2_g3)
+
+```
+
+
+
+## ZIP
+
+```{r zip, dependson="predictive_samples"}
+zip_model <- cmdstan_model("zip_model.stan")
+zip_fit = zip_model$sample( 
+               data=list(n1=num_bachelors, n2=num_no_bachelors,
+               y1=bachelors_data, y2=no_bachelors_data),
+               refresh=0)
+print(zip_fit)
+```
+
+## Predictive Checks (ZIP Model)
+```{r, dependson="zip"}
+
+y1_rep <- zip_fit %>% spread_draws(y1rep[N1])
+y2_rep <- zip_fit %>% spread_draws(y2rep[N2])
+
+y1_rep %>% group_by(.draw) %>% 
+  summarize(mv=mean(y1rep)/var(y1rep), zeros=mean(y1rep==0)) ->
+  y1_T
+
+y1_T %>% ggplot() + geom_histogram(aes(x=zeros)) + 
+  geom_vline(xintercept = mean(bachelors_data == 0), col="red") +
+  ggtitle("Bachelors, Frac Zero") -> y1_frac_zero
+
+y1_T %>% ggplot() + geom_histogram(aes(x=mv)) + 
+  geom_vline(xintercept = mean(bachelors_data)/var(bachelors_data), col="red") + 
+  ggtitle("Bachelors, Mean/Var")-> y1_g3
+
+y2_rep %>% group_by(.draw) %>% 
+  summarize(mv=mean(y2rep)/var(y2rep), zeros=mean(y2rep==0)) ->
+  y2_T
+
+y2_T %>% ggplot() + geom_histogram(aes(x=zeros)) + 
+  geom_vline(xintercept = mean(no_bachelors_data == 0), col="red") + 
+  ggtitle("No Bachelors, Frac Zero") -> y2_frac_zero
+
+y2_T %>% ggplot() + geom_histogram(aes(x=mv)) + 
+  geom_vline(xintercept = mean(no_bachelors_data)/var(no_bachelors_data), col="red") +
+  ggtitle("No Bachelors, Mean/Var") -> y2_g3
+
+
+(y1_frac_zero + y2_frac_zero) / (y1_g3 + y2_g3)
+
+```
+
+---
+
+### Model Comparison
+
+- PPCs for checking model fit.  But how do we compare different models (regardless of fit)?
+
+- Compare models by their out-of-sample predictive power
+
+- Leave-one-out cross validation 
+  + Fit model $n$ times, leaving out one observation
+  + Evalute predcitive accuracy on left out observations
+  + Typically used for parameter tuning
+
+- Can use ideas from LOO-CV to compare models
+
+## Measures of Predictive Accuracy
+
+- Point prediction: predict a single unknown future observation 
+
+- Measures of predictive accuracy are called *scoring functions* (e.g. MSE)
+
+- Probabilistic predictions account for uncertainty
+  + **Scoring rules**: measure of accuracy based on probabilistic predictions
+  + Examples: quadratic, logarithmic and zero-one scores
+
+---
+
+### Log-likelihood as a scoring rule
+
+- As a measure of accuracy, we call it the "log predictive density'' 
+
+- $\text{log}(p(y|\theta))$ is proportional to MSE if the data are normal with constant variance
+
+- Connection to Kullback-Leibler divergence
+    + KL: $-E_p log(q(y)/p(y)) = - E_p log(q(y)) + E_p log(p(y))$
+    + Asymptotically, the lowest KL model is the one with the highest expected log predictive density
+    
+---
+
+### Out-of-sample prediction
+
+
+---
+
+## Expected Log Pointwise Predictive Density
+
+
+<!-- ## elppd -->
+
+<!-- - Sensible if the data is i.i.d.  How do you divide up data if it's not i.i.d? -->
+
+<!-- -  -->
+
+---
+
+### LOO Importance Sampling 
+
+- When the data are conditionally independent, $r_{i}^{s}=\frac{1}{p\left(y_{i} \mid \theta^{s}\right)} \propto \frac{p\left(\theta^{s} \mid y_{-i}\right)}{p\left(\theta^{s} \mid y\right)}$ to get importance sampling estimates
+
+
+- $p\left(\tilde{y}_{i} \mid y_{-i}\right) \approx \frac{\sum_{s=1}^{S} r_{i}^{s} p\left(\tilde{y}_{i} \mid \theta^{s}\right)}{\sum_{s=1}^{S} r_{i}^{s}}$
+
+- $p\left(y_{i} \mid y_{-i}\right) \approx \frac{1}{\frac{1}{S} \sum_{s=1}^{S} \frac{1}{p\left(y_{i} \mid \theta^{s}\right)}}$
+
+[https://link.springer.com/article/10.1007/s11222-016-9696-4](https://link.springer.com/article/10.1007/s11222-016-9696-4)
+
+## Pareto Smoothed Importance Sampling
+
+1. Fit the generalized Pareto distribution to the 20% largest
+importance ratios $r_s$
+
+2. Replacing the 20% largest ratios by the expected values of the order statistics of the fitted generalized Pareto distribution
+
+3. Truncate the weights to ensure finite variance (see paper)
+
+The above steps must be performed for each data point i.
+
+<center>$\widehat{\operatorname{elpd}}_{\mathrm{psis}-\mathrm{loo}}=\sum_{i=1}^n \log \left(\frac{\sum_{s=1}^S w_i^s p\left(y_i \mid \theta^s\right)}{\sum_{s=1}^S w_i^s}\right)$</center>
+
+## 
+
+```{r, echo=TRUE}
+library(loo)
+nb_model <- cmdstan_model("nb_model.stan")
+nb_fit = nb_model$sample(
+               data=list(n1=num_bachelors, n2=num_no_bachelors,
+               y1=bachelors_data, y2=no_bachelors_data),
+               refresh=0)
+
+loo_compare(list("pois"=pois_fit$loo(), 
+            "zip"=zip_fit$loo(),
+            "nb"=nb_fit$loo()))
+
+```
+
+
+## Galaxies Example
+
+- Velocities in km/sec of 82 galaxies (Corona Borealis region). 
+
+- Multimodality in such surveys is evidence for voids and superclusters in the far universe.
+
+- Statistical question: how many clusters are there in this dataset?
+
+```{r}
+galaxy_speeds <- log(MASS::galaxies)
+tibble(speed=galaxy_speeds) %>% ggplot() + 
+  geom_histogram(aes(x=speed), bins=40) + 
+  theme_bw() + xlab("log speed")
+```
+
+
+
+
+## Model Comparison
+
+```{r, echo=TRUE, results='hide', message='hide'}
+library("loo")
+galaxy_speeds <- log(MASS::galaxies)
+galaxy_results <- list()
+
+## Run model for each of k clusters 
+mix_model <- cmdstanr::cmdstan_model("mix_model.stan")
+for(k in 1:5) {
+  galaxy_results[[k]] <- 
+    mix_model$sample(
+      data=list(K=k, N=length(galaxy_speeds), y=galaxy_speeds), 
+      refresh=0, show_messages=FALSE)
+}
+```
+
+## Model Comparison
+
+```{r, echo=TRUE}
+loo_compare(galaxy_results[[1]]$loo(), 
+            galaxy_results[[2]]$loo(), 
+            galaxy_results[[3]]$loo(), 
+            galaxy_results[[4]]$loo(), 
+            galaxy_results[[5]]$loo())
+
+```
+
+
+## Model Comparison
+
+```{r, echo=TRUE}
+galaxy_results[[4]]$loo()
+
+```
+
+
+
